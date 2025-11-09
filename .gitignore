@@ -215,3 +215,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.vscode/
+.idea/
+*.db
+*.sqlite3
+alembic/versions/*_*.py
+!alembic/versions/.gitkeep
