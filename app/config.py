@@ -3,8 +3,8 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    SECRET_KEY: str
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:superuser@localhost:5432/grace"
+    SECRET_KEY: str = "ghggy88uy6r5efo[-90836234excu7u900jpj0908i989h]"
     ENVIRONMENT: str = "development"
     PROJECT_NAME: str = "Clothing Brand API"
     API_V1_STR: str = "/api/v1"
