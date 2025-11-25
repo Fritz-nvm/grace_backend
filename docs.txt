@@ -1,0 +1,383 @@
+# Grace Backend — API Reference for Frontend
+
+Quick overview
+- Base URL: set by environment; default used in dev: `http://localhost:8000`
+- API prefix: value of `app.config.settings.API_V1_STR` — default `/api/v1`
+- All endpoints use JSON for requests and responses.
+- No authentication in current backend — endpoints are open.
+- Use header: `Content-Type: application/json` for POST/PUT.
+- Pagination: `skip` (offset) and `limit` (max items).
+- Decimal fields (price, sale_price) should be sent as JSON numbers (e.g. `59.99`).
+- Slugs are generated server-side and returned in responses.
+- 404 responses return HTTP 404 with JSON: `{"detail": "Resource not found"}` or specific message (e.g. "Item not found").
+
+Base variables (use these in Postman)
+- base_url: `http://localhost:8000`
+- api_prefix: `/api/v1`
+
+Schemas — fields frontend needs to know
+- Collection
+  - id: int
+  - name: string (1–255) — required on create
+  - description?: string
+  - image?: string (URL)
+  - is_active: bool
+  - display_order: int
+  - slug: string (server-generated)
+  - created_at / updated_at: ISO datetime
+- Item
+  - id: int
+  - name: string — required on create
+  - description?: string
+  - price: number (decimal) — required on create
+  - sale_price?: number
+  - sku?: string
+  - images?: string[] (URLs)
+  - colors?: string[]
+  - sizes?: string[]
+  - fabric?: string
+  - stock_quantity?: int
+  - is_available?: bool
+  - likes_count?: int
+  - collection_id: int — required on create
+  - slug: string (server-generated)
+  - created_at / updated_at: ISO datetimes
+
+Collections endpoints (router: app/api/collections.py)
+- POST {base_url}{api_prefix}/collections/
+  - Purpose: create a new collection
+  - Request body (JSON) — CollectionCreate:
+    - name (string, required)
+    - description, image, is_active (bool), display_order (int) optional
+  - Response: 201 Created — full Collection object (includes id, slug, created_at)
+  - Example Postman body:
+    {
+      "name": "Summer 2025",
+      "description": "Lightwear",
+      "image": "https://cdn.example.com/images/summer2025.jpg",
+      "is_active": true,
+      "display_order": 0
+    }
+
+- GET {base_url}{api_prefix}/collections/
+  - Purpose: list collections
+  - Query params:
+    - skip: int (default 0)
+    - limit: int (default 100)
+    - active_only: bool (default false) — when true returns only active collections
+  - Response: 200 OK — array of Collection objects
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/collections/?skip=0&limit=50&active_only=false`
+
+- GET {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: get one collection by ID
+  - Path: `collection_id` (int)
+  - Response: 200 OK or 404 Not Found
+
+- GET {base_url}{api_prefix}/collections/slug/{slug}
+  - Purpose: get one collection by slug
+  - Response: 200 OK or 404 Not Found
+
+- PUT {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: update collection (partial allowed per CollectionUpdate)
+  - Request body example:
+    {
+      "description": "Updated description",
+      "is_active": false
+    }
+  - Response: 200 OK — updated Collection object
+
+- DELETE {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: delete collection
+  - Response: 204 No Content or 404 Not Found
+  - Note: DB model may cascade-delete related items.
+
+Items endpoints (router: app/api/items.py)
+- POST {base_url}{api_prefix}/items/
+  - Purpose: create a new item
+  - Request body (JSON) — ItemCreate (important fields below):
+    - name (string, required)
+    - price (number/decimal, required)
+    - collection_id (int, required)
+    - description, sale_price, sku, images[], colors[], sizes[], fabric, stock_quantity, is_available optional
+  - Response: 201 Created — full Item object (includes id, slug)
+  - Example Postman body:
+    {
+      "name": "Linen Shirt",
+      "description": "Breathable linen shirt",
+      "price": 59.99,
+      "sale_price": 49.99,
+      "sku": "LS-001",
+      "images": ["https://cdn.example.com/items/ls-1.jpg"],
+      "colors": ["beige"],
+      "sizes": ["S","M","L"],
+      "fabric": "linen",
+      "stock_quantity": 25,
+      "is_available": true,
+      "collection_id": 1
+    }
+
+- GET {base_url}{api_prefix}/items/
+  - Purpose: list items
+  - Query params:
+    - skip: int (default 0)
+    - limit: int (default 100)
+    - available_only: bool (default false) — when true returns items where is_available==True and stock_quantity>0
+  - Response: 200 OK — array of Item objects
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/items/?skip=0&limit=50&available_only=false`
+
+- GET {base_url}{api_prefix}/items/collection/{collection_id}
+  - Purpose: list items that belong to a collection
+  - Query: skip, limit
+  - Response: 200 OK — array of Item objects
+
+- GET {base_url}{api_prefix}/items/{item_id}
+  - Purpose: get item by ID
+  - Response: 200 OK or 404 Not Found
+
+- GET {base_url}{api_prefix}/items/slug/{slug}
+  - Purpose: get item by slug
+  - Response: 200 OK or 404 Not Found
+
+- PUT {base_url}{api_prefix}/items/{item_id}
+  - Purpose: update item (ItemUpdate) — partial updates allowed
+  - Example body:
+    {
+      "sale_price": 44.99,
+      "stock_quantity": 20
+    }
+  - Response: 200 OK — updated Item object
+
+- POST {base_url}{api_prefix}/items/{item_id}/like
+  - Purpose: increment the item's likes_count
+  - Response: 200 OK — Item object with updated likes_count
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/items/1/like`
+
+- DELETE {base_url}{api_prefix}/items/{item_id}
+  - Purpose: delete item
+  - Response: 204 No Content or 404 Not Found
+
+Error handling
+- Validation errors: 422 Unprocessable Entity with details (Pydantic)
+- Not found: 404 with `{"detail":"Item not found"}` or `{"detail":"Collection not found"}`
+- Standard HTTP status codes are used; frontend should inspect status and JSON body.
+
+Postman quick import (how to use)
+- Create a Postman collection and add a collection-level variable:
+  - `base_url = http://localhost:8000`
+  - `api_prefix = /api/v1`
+- For POST/PUT requests set header: `Content-Type: application/json`
+- Copy the example JSON bodies above into the request raw body (JSON mode).
+- Use the example URLs (replace `{{base_url}}` and `{{api_prefix}}`) to test.
+
+Notes for frontend binding
+- Use `create` endpoints to get server-generated `id` and `slug` and then use those in UI routes.
+- For listing pages, use `skip`/`limit` for pagination. `available_only=true` useful for storefront displays.
+- When updating, send only changed fields to the PUT endpoints (ItemUpdate/CollectionUpdate).
+- For likes, call the POST `.../like` endpoint and update local UI with returned `likes_count`.
+- No auth headers are necessary in current implementation.
+
+Where to look in the repo
+- Collections API: `app/api/collections.py` (routes and behavior)
+- Items API: `app/api/items.py` (routes and behavior)
+- Schemas: `app/schemas/collection.py`, `app/schemas/item.py`
+- CRUD helpers: `app/crud/collection.py`, `app/crud/item.py`
+- DB dependencies: `app/api/dependencies.py` (`get_db`)
+
+If you want, I can:
+- produce an importable Postman collection JSON file trimmed to the endpoints your frontend needs, or
+- produce concise axios/fetch snippets for the key flows (list collections, create item, like item, etc.).// filepath: /home/fritz-nvm/grace_backend/README_API.md
+
+# Grace Backend — API Reference for Frontend
+
+Quick overview
+- Base URL: set by environment; default used in dev: `http://localhost:8000`
+- API prefix: value of `app.config.settings.API_V1_STR` — default `/api/v1`
+- All endpoints use JSON for requests and responses.
+- No authentication in current backend — endpoints are open.
+- Use header: `Content-Type: application/json` for POST/PUT.
+- Pagination: `skip` (offset) and `limit` (max items).
+- Decimal fields (price, sale_price) should be sent as JSON numbers (e.g. `59.99`).
+- Slugs are generated server-side and returned in responses.
+- 404 responses return HTTP 404 with JSON: `{"detail": "Resource not found"}` or specific message (e.g. "Item not found").
+
+Base variables (use these in Postman)
+- base_url: `http://localhost:8000`
+- api_prefix: `/api/v1`
+
+Schemas — fields frontend needs to know
+- Collection
+  - id: int
+  - name: string (1–255) — required on create
+  - description?: string
+  - image?: string (URL)
+  - is_active: bool
+  - display_order: int
+  - slug: string (server-generated)
+  - created_at / updated_at: ISO datetime
+- Item
+  - id: int
+  - name: string — required on create
+  - description?: string
+  - price: number (decimal) — required on create
+  - sale_price?: number
+  - sku?: string
+  - images?: string[] (URLs)
+  - colors?: string[]
+  - sizes?: string[]
+  - fabric?: string
+  - stock_quantity?: int
+  - is_available?: bool
+  - likes_count?: int
+  - collection_id: int — required on create
+  - slug: string (server-generated)
+  - created_at / updated_at: ISO datetimes
+
+Collections endpoints (router: app/api/collections.py)
+- POST {base_url}{api_prefix}/collections/
+  - Purpose: create a new collection
+  - Request body (JSON) — CollectionCreate:
+    - name (string, required)
+    - description, image, is_active (bool), display_order (int) optional
+  - Response: 201 Created — full Collection object (includes id, slug, created_at)
+  - Example Postman body:
+    {
+      "name": "Summer 2025",
+      "description": "Lightwear",
+      "image": "https://cdn.example.com/images/summer2025.jpg",
+      "is_active": true,
+      "display_order": 0
+    }
+
+- GET {base_url}{api_prefix}/collections/
+  - Purpose: list collections
+  - Query params:
+    - skip: int (default 0)
+    - limit: int (default 100)
+    - active_only: bool (default false) — when true returns only active collections
+  - Response: 200 OK — array of Collection objects
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/collections/?skip=0&limit=50&active_only=false`
+
+- GET {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: get one collection by ID
+  - Path: `collection_id` (int)
+  - Response: 200 OK or 404 Not Found
+
+- GET {base_url}{api_prefix}/collections/slug/{slug}
+  - Purpose: get one collection by slug
+  - Response: 200 OK or 404 Not Found
+
+- PUT {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: update collection (partial allowed per CollectionUpdate)
+  - Request body example:
+    {
+      "description": "Updated description",
+      "is_active": false
+    }
+  - Response: 200 OK — updated Collection object
+
+- DELETE {base_url}{api_prefix}/collections/{collection_id}
+  - Purpose: delete collection
+  - Response: 204 No Content or 404 Not Found
+  - Note: DB model may cascade-delete related items.
+
+Items endpoints (router: app/api/items.py)
+- POST {base_url}{api_prefix}/items/
+  - Purpose: create a new item
+  - Request body (JSON) — ItemCreate (important fields below):
+    - name (string, required)
+    - price (number/decimal, required)
+    - collection_id (int, required)
+    - description, sale_price, sku, images[], colors[], sizes[], fabric, stock_quantity, is_available optional
+  - Response: 201 Created — full Item object (includes id, slug)
+  - Example Postman body:
+    {
+      "name": "Linen Shirt",
+      "description": "Breathable linen shirt",
+      "price": 59.99,
+      "sale_price": 49.99,
+      "sku": "LS-001",
+      "images": ["https://cdn.example.com/items/ls-1.jpg"],
+      "colors": ["beige"],
+      "sizes": ["S","M","L"],
+      "fabric": "linen",
+      "stock_quantity": 25,
+      "is_available": true,
+      "collection_id": 1
+    }
+
+- GET {base_url}{api_prefix}/items/
+  - Purpose: list items
+  - Query params:
+    - skip: int (default 0)
+    - limit: int (default 100)
+    - available_only: bool (default false) — when true returns items where is_available==True and stock_quantity>0
+  - Response: 200 OK — array of Item objects
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/items/?skip=0&limit=50&available_only=false`
+
+- GET {base_url}{api_prefix}/items/collection/{collection_id}
+  - Purpose: list items that belong to a collection
+  - Query: skip, limit
+  - Response: 200 OK — array of Item objects
+
+- GET {base_url}{api_prefix}/items/{item_id}
+  - Purpose: get item by ID
+  - Response: 200 OK or 404 Not Found
+
+- GET {base_url}{api_prefix}/items/slug/{slug}
+  - Purpose: get item by slug
+  - Response: 200 OK or 404 Not Found
+
+- PUT {base_url}{api_prefix}/items/{item_id}
+  - Purpose: update item (ItemUpdate) — partial updates allowed
+  - Example body:
+    {
+      "sale_price": 44.99,
+      "stock_quantity": 20
+    }
+  - Response: 200 OK — updated Item object
+
+- POST {base_url}{api_prefix}/items/{item_id}/like
+  - Purpose: increment the item's likes_count
+  - Response: 200 OK — Item object with updated likes_count
+  - Example URL:
+    `{{base_url}}{{api_prefix}}/items/1/like`
+
+- DELETE {base_url}{api_prefix}/items/{item_id}
+  - Purpose: delete item
+  - Response: 204 No Content or 404 Not Found
+
+Error handling
+- Validation errors: 422 Unprocessable Entity with details (Pydantic)
+- Not found: 404 with `{"detail":"Item not found"}` or `{"detail":"Collection not found"}`
+- Standard HTTP status codes are used; frontend should inspect status and JSON body.
+
+Postman quick import (how to use)
+- Create a Postman collection and add a collection-level variable:
+  - `base_url = http://localhost:8000`
+  - `api_prefix = /api/v1`
+- For POST/PUT requests set header: `Content-Type: application/json`
+- Copy the example JSON bodies above into the request raw body (JSON mode).
+- Use the example URLs (replace `{{base_url}}` and `{{api_prefix}}`) to test.
+
+Notes for frontend binding
+- Use `create` endpoints to get server-generated `id` and `slug` and then use those in UI routes.
+- For listing pages, use `skip`/`limit` for pagination. `available_only=true` useful for storefront displays.
+- When updating, send only changed fields to the PUT endpoints (ItemUpdate/CollectionUpdate).
+- For likes, call the POST `.../like` endpoint and update local UI with returned `likes_count`.
+- No auth headers are necessary in current implementation.
+
+Where to look in the repo
+- Collections API: `app/api/collections.py` (routes and behavior)
+- Items API: `app/api/items.py` (routes and behavior)
+- Schemas: `app/schemas/collection.py`, `app/schemas/item.py`
+- CRUD helpers: `app/crud/collection.py`, `app/crud/item.py`
+- DB dependencies: `app/api/dependencies.py` (`get_db`)
+
+If you want, I can:
+- produce an importable Postman collection JSON file trimmed to the endpoints your frontend needs, or
+- produce concise axios/fetch snippets for the key flows (list collections, create item, like item, etc.).
