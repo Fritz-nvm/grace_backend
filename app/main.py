@@ -46,19 +46,6 @@ app.mount("/admin", admin_app, name="admin")
 # -----------------------------
 
 
-# --- Startup Event to Ensure DB Tables Exist (Crucial for Admin) ---
-@app.on_event("startup")
-async def startup_event():
-    # Ensure tables are created if they don't exist
-    async with async_engine.begin() as conn:
-        # Check if Base is defined and create tables
-        if "Base" in globals():
-            await conn.run_sync(Base.metadata.create_all)
-
-
-# ------------------------------------------------------------------
-
-
 @app.get("/")
 async def root():
     return {"message": "Clothing Brand API", "docs": "/docs", "version": "1.0.0"}
