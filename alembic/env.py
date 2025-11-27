@@ -31,7 +31,7 @@ target_metadata = Base.metadata
 print("Registered table names:", target_metadata.tables.keys())
 
 # Load the DATABASE_URL from application settings
-DATABASE_URL = get_settings().DATABASE_URL
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def run_migrations_offline() -> None:
