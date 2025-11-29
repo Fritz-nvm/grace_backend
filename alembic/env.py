@@ -1,8 +1,10 @@
-# alembic/env.py
-
 from logging.config import fileConfig
 import sys
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 from sqlalchemy import pool
 from app.models import collection, item

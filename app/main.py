@@ -1,21 +1,33 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from app.api import collections, items
-from app.admin import setup_admin
+from app.api import collections, items, suite
+from app.admin import admin, setup_admin_views
+
 from sqlalchemy.ext.asyncio import create_async_engine
+import os
 
-# Assuming you have a Base class for ORM models
-from app.models import Collection, Item
+load_dotenv()
 
-# --- Database Setup ---
-ASYNC_DATABASE_URL = "postgresql+asyncpg://postgres:superuser@localhost:5433/grace"
+
+ASYNC_DATABASE_URL = os.getenv("DATABASE_URL")
 async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
-# ----------------------
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+# Session middleware for admin authentication
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET", "change-this-in-production-12345"),
+    session_cookie="admin_session",
+    max_age=3600,  # 1 hour session
+)
+
 
 # CORS middleware for API endpoints
 app.add_middleware(
@@ -26,24 +38,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routers
+# Serve static files (for admin images, etc.)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Setup admin views
+setup_admin_views(admin)
+
+# Mount admin to app
+admin.mount_to(app)
+
+
+app.include_router(
+    suite.router, prefix=f"{settings.API_V1_STR}/suites", tags=["suites"]
+)
+
 app.include_router(
     collections.router,
     prefix=f"{settings.API_V1_STR}/collections",
     tags=["collections"],
 )
+
 app.include_router(items.router, prefix=f"{settings.API_V1_STR}/items", tags=["items"])
-
-
-# --- Admin Setup and Mount ---
-# Pass the engine and a dictionary of your models to the setup function
-admin_app = setup_admin(
-    engine=async_engine, models={"Collection": Collection, "Item": Item}
-)
-
-# Mount the created admin application (which is the callable Starlette app)
-app.mount("/admin", admin_app, name="admin")
-# -----------------------------
 
 
 @app.get("/")

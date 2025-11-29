@@ -1,23 +1,22 @@
-from pydantic import BaseModel, Field, condecimal
+from typing import List, Optional
 from datetime import datetime
-from typing import Optional, List
 from decimal import Decimal
+from pydantic import BaseModel, Field, condecimal
+
+
+Price = condecimal(max_digits=12, decimal_places=2)
 
 
 class ItemBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., max_length=255)
     description: Optional[str] = None
-    price: condecimal(max_digits=10, decimal_places=2) = Field(..., gt=0)
-    sale_price: Optional[condecimal(max_digits=10, decimal_places=2)] = Field(
-        None, gt=0
-    )
-    sku: Optional[str] = Field(None, max_length=100)
-    images: List[str] = Field(default_factory=list)
-    colors: List[str] = Field(default_factory=list)
-    sizes: List[str] = Field(default_factory=list)
+    price: Optional[Decimal] = None
+    images: Optional[List[str]] = Field(default_factory=list)
+    colors: Optional[List[str]] = Field(default_factory=list)
+    sizes: Optional[List[str]] = Field(default_factory=list)
     fabric: Optional[str] = Field(None, max_length=100)
-    stock_quantity: int = Field(default=0, ge=0)
-    is_available: bool = True
+    fabric_composition: Optional[str] = Field(None, max_length=255)
+    category: Optional[str] = None
     collection_id: int
 
 
@@ -26,28 +25,30 @@ class ItemCreate(ItemBase):
 
 
 class ItemUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    name: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = None
-    price: Optional[condecimal(max_digits=10, decimal_places=2)] = Field(None, gt=0)
-    sale_price: Optional[condecimal(max_digits=10, decimal_places=2)] = Field(
-        None, gt=0
-    )
-    sku: Optional[str] = Field(None, max_length=100)
+    price: Optional[Decimal] = None
     images: Optional[List[str]] = None
     colors: Optional[List[str]] = None
     sizes: Optional[List[str]] = None
     fabric: Optional[str] = Field(None, max_length=100)
-    stock_quantity: Optional[int] = Field(None, ge=0)
-    is_available: Optional[bool] = None
+    fabric_composition: Optional[str] = Field(None, max_length=255)
+    category: Optional[str] = None
     collection_id: Optional[int] = None
 
 
-class ItemResponse(ItemBase):
+class ItemInDBBase(ItemBase):
     id: int
-    slug: str
-    likes_count: int
-    created_at: datetime
+    price: Decimal
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class Item(ItemInDBBase):
+    pass
+
+
+ItemResponse = Item

@@ -10,6 +10,16 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = os.getenv("PROJECT_NAME")
     API_V1_STR: str = os.getenv("API_V1_STR")
 
+    # admin
+
+    ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD")
+    SESSION_SECRET: str = os.getenv("SESSION_SECRET")
+    ADMIN_LOGO_URL: str = os.getenv("ADMIN_LOGO_URL", "/static/images/admin_logo.png")
+    ADMIN_LOGIN_LOGO_URL: str = os.getenv(
+        "ADMIN_LOGIN_LOGO_URL", "/static/images/admin_login_logo.png"
+    )
+
     class Config:
         env_file = ".env"
         case_sensitive = True

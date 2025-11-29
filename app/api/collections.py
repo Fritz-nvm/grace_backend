@@ -1,10 +1,9 @@
-# app/api/collections.py
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_db
-from app.crud import collection as crud_collection
+from app.database import get_db
+from app.crud.collection import collection as crud_collection
 from app.schemas.collection import (
     CollectionCreate,
     CollectionUpdate,
@@ -20,38 +19,28 @@ router = APIRouter()
 async def create_collection(
     collection_in: CollectionCreate, db: AsyncSession = Depends(get_db)
 ):
-    """Create a new collection"""
-    return await crud_collection.create(db, obj_in=collection_in)
+    return await crud_collection.create(db=db, obj_in=collection_in)
 
 
 @router.get("/", response_model=List[CollectionResponse])
 async def list_collections(
-    skip: int = 0,
-    limit: int = 100,
-    active_only: bool = False,
-    db: AsyncSession = Depends(get_db),
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
-    """Get all collections"""
-    if active_only:
-        return await crud_collection.get_active(db, skip=skip, limit=limit)
-    return await crud_collection.get_multi(db, skip=skip, limit=limit)
+    return await crud_collection.get_all(db=db, skip=skip, limit=limit)
+
+
+@router.get("/suite/{suite_id}", response_model=List[CollectionResponse])
+async def list_collections_by_suite(
+    suite_id: int, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+):
+    return await crud_collection.get_by_suite(
+        db=db, suite_id=suite_id, skip=skip, limit=limit
+    )
 
 
 @router.get("/{collection_id}", response_model=CollectionResponse)
 async def get_collection(collection_id: int, db: AsyncSession = Depends(get_db)):
-    """Get a specific collection by ID"""
-    collection = await crud_collection.get(db, id=collection_id)
-    if not collection:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
-        )
-    return collection
-
-
-@router.get("/slug/{slug}", response_model=CollectionResponse)
-async def get_collection_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
-    """Get a collection by slug"""
-    collection = await crud_collection.get_by_slug(db, slug=slug)
+    collection = await crud_collection.get(db=db, collection_id=collection_id)
     if not collection:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
@@ -65,20 +54,18 @@ async def update_collection(
     collection_in: CollectionUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update a collection"""
-    collection = await crud_collection.get(db, id=collection_id)
-    if not collection:
+    db_obj = await crud_collection.get(db=db, collection_id=collection_id)
+    if not db_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
         )
-    return await crud_collection.update(db, db_obj=collection, obj_in=collection_in)
+    return await crud_collection.update(db=db, db_obj=db_obj, obj_in=collection_in)
 
 
 @router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_collection(collection_id: int, db: AsyncSession = Depends(get_db)):
-    """Delete a collection"""
-    collection = await crud_collection.delete(db, id=collection_id)
-    if not collection:
+    deleted = await crud_collection.delete(db=db, collection_id=collection_id)
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
         )

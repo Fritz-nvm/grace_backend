@@ -8,10 +8,17 @@ from sqlalchemy import (
     ForeignKey,
     ARRAY,
     Numeric,
+    Enum,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+import enum
+
+
+class CategoryEnum(enum.Enum):
+    BRIDAL = "BRIDAL"
+    BOUTIQUE = "BOUTIQUE"
 
 
 class Item(Base):
@@ -19,26 +26,16 @@ class Item(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    slug = Column(String(255), nullable=False, unique=True, index=True)
-    sku = Column(String(100), unique=True, index=True)
     description = Column(Text)
 
-    # Pricing
     price = Column(Numeric(10, 2), nullable=False)
-    sale_price = Column(Numeric(10, 2), nullable=True)
 
-    # Product details
-    images = Column(ARRAY(String), default=list)  # Multiple image URLs
+    images = Column(ARRAY(String), default=list)
     colors = Column(ARRAY(String), default=list)
     sizes = Column(ARRAY(String), default=list)
     fabric = Column(String(100))
-
-    # Inventory
-    stock_quantity = Column(Integer, default=0)
-    is_available = Column(Boolean, default=True)
-
-    # Social
-    likes_count = Column(Integer, default=0)
+    fabric_composition = Column(String(255))
+    category = Column(Enum(CategoryEnum))
 
     # Foreign key
     collection_id = Column(Integer, ForeignKey("collections.id", ondelete="CASCADE"))

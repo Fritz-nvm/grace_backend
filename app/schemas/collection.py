@@ -1,14 +1,15 @@
-from pydantic import BaseModel, Field
+from typing import List, Optional
 from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel, Field
+from app.schemas.item import Item
 
 
 class CollectionBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., max_length=255)
     description: Optional[str] = None
-    image: Optional[str] = None
-    is_active: bool = True
-    display_order: int = 0
+    is_active: Optional[bool] = True
+    display_order: Optional[int] = 0
+    suite_id: int
 
 
 class CollectionCreate(CollectionBase):
@@ -16,18 +17,31 @@ class CollectionCreate(CollectionBase):
 
 
 class CollectionUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    name: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = None
-    image: Optional[str] = None
     is_active: Optional[bool] = None
     display_order: Optional[int] = None
+    suite_id: Optional[int] = None
 
 
-class CollectionResponse(CollectionBase):
+class CollectionInDBBase(CollectionBase):
     id: int
-    slug: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class Collection(CollectionInDBBase):
+    # Option 1: List of item IDs (simple, avoids circular imports)
+    item_ids: List[int] = []
+
+    # Option 2: Full item objects (if you want complete item data)
+    # items: List[Item] = []
+
+    class Config:
+        from_attributes = True
+
+
+CollectionResponse = Collection
