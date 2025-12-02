@@ -1,10 +1,10 @@
 from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, condecimal
-
-
-Price = condecimal(max_digits=12, decimal_places=2)
+from pydantic import BaseModel, Field, validator
+import uuid
+import json
+import re
 
 
 class ItemBase(BaseModel):
@@ -17,7 +17,7 @@ class ItemBase(BaseModel):
     fabric: Optional[str] = Field(None, max_length=100)
     fabric_composition: Optional[str] = Field(None, max_length=255)
     category: Optional[str] = None
-    collection_id: int
+    collection_id: uuid.UUID
 
 
 class ItemCreate(ItemBase):
@@ -28,20 +28,20 @@ class ItemUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     description: Optional[str] = None
     price: Optional[Decimal] = None
-    images: Optional[List[str]] = None
-    colors: Optional[List[str]] = None
-    sizes: Optional[List[str]] = None
+    images: Optional[List[str]] = Field(default_factory=list)
+    colors: Optional[List[str]] = Field(default_factory=list)
+    sizes: Optional[List[str]] = Field(default_factory=list)
     fabric: Optional[str] = Field(None, max_length=100)
     fabric_composition: Optional[str] = Field(None, max_length=255)
     category: Optional[str] = None
-    collection_id: Optional[int] = None
+    collection_id: Optional[uuid.UUID] = None
 
 
 class ItemInDBBase(ItemBase):
-    id: int
-    price: Decimal
+    id: uuid.UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    collection_name: Optional[str] = None
 
     class Config:
         from_attributes = True

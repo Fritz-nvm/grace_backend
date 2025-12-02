@@ -3,8 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy.orm import selectinload, joinedload
+
 from app.models.collection import Collection
 from app.schemas.collection import CollectionCreate, CollectionUpdate
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CollectionCRUD:
@@ -17,7 +20,7 @@ class CollectionCRUD:
             description=obj_in.description,
             is_active=getattr(obj_in, "is_active", True),
             display_order=getattr(obj_in, "display_order", 0),
-            suite_id=obj_in.suite_id,
+            suite_name=obj_in.suite_name,
         )
         db.add(db_collection)
         await db.commit()
@@ -37,28 +40,30 @@ class CollectionCRUD:
         await db.refresh(db_collection)
         return db_collection
 
-    async def get(self, db: AsyncSession, collection_id: int) -> Optional[Collection]:
-        """
-        Get a collection by ID with items eagerly loaded.
-        """
+    # crud/collection.py
+    async def get(self, db: AsyncSession, collection_id: UUID) -> Optional[Collection]:
         stmt = (
             select(Collection)
-            .options(selectinload(Collection.items))
+            .options(
+                selectinload(Collection.items),
+                joinedload(Collection.suite),  # This populates the suite relationship
+            )
             .filter(Collection.id == collection_id)
         )
         result = await db.execute(stmt)
         return result.scalars().first()
 
-    async def get_by_suite(
-        self, db: AsyncSession, *, suite_id: int, skip: int = 0, limit: int = 100
+    async def get_by_suite_name(
+        self, db: AsyncSession, *, suite_name: str, skip: int = 0, limit: int = 100
     ) -> List[Collection]:
         """
-        Get all collections for a specific suite.
+        Get all collections for a specific suite by suite name.
         """
         stmt = (
             select(Collection)
             .options(selectinload(Collection.items))
-            .filter(Collection.suite_id == suite_id)
+            .join(Collection.suite)  # Join through the relationship
+            .filter(Suite.name == suite_name)
             .offset(skip)
             .limit(limit)
         )

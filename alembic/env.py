@@ -7,7 +7,7 @@ load_dotenv()
 
 
 from sqlalchemy import pool
-from app.models import collection, item
+from app.models import collection, item, package, suite, testimonial
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context

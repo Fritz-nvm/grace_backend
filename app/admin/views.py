@@ -1,11 +1,8 @@
-# app/admin/views.py
 from starlette_admin.contrib.sqla import ModelView
 from starlette_admin import DropDown
 from starlette_admin.fields import TextAreaField
 
-# Import your actual models
-from app.models import Suite, Collection, Item
-from app.models.item import CategoryEnum  # Import your enum
+from app.models import Suite, Collection, Item, Package, Testimonial
 
 
 class SuiteView(ModelView):
@@ -85,11 +82,58 @@ class ItemView(ModelView):
     sortable_fields = ["name", "price", "created_at", "updated_at"]
 
 
+class PackageView(ModelView):
+    """
+    Admin view for Package management
+    """
+
+    label = "Packages"
+    icon = "fa fa-folder"
+    fields = [
+        "id",
+        "name",
+        "price",
+        "description",
+        TextAreaField(
+            "features",
+            label="Features",
+            help_text="Enter features, one per line",
+        ),
+        "pdf_url",
+        "is_active",
+        "is_popular",
+        "created_at",
+        "updated_at",
+        "display_order",
+    ]
+    searchable_fields = ["name", "description"]
+    sortable_fields = ["name", "display_order", "created_at"]
+
+
+class TestimonialView(ModelView):
+    """
+    Admin view for Testimonial management
+    """
+
+    label = "Testimonials"
+    icon = "fa fa-comment"
+    fields = [
+        "id",
+        "client_name",
+        "review_text",
+        "rating",
+        "created_at",
+        "updated_at",
+        "display_order",
+    ]
+    searchable_fields = ["client_name", "review_text"]
+    sortable_fields = ["client_name", "created_at"]
+
+
 def setup_admin_views(admin):
     """
     Setup all admin views for your models
     """
-    # Product Management Dropdown
     admin.add_view(
         DropDown(
             "Product Management",
@@ -98,6 +142,8 @@ def setup_admin_views(admin):
                 SuiteView(Suite),
                 CollectionView(Collection),
                 ItemView(Item),
+                PackageView(Package),
+                TestimonialView(Testimonial),
             ],
         )
     )

@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,9 +23,9 @@ class SuiteCRUD:
         await db.refresh(db_suite)
         return db_suite
 
-    async def get(self, db: AsyncSession, suite_id: int) -> Optional[Suite]:
+    async def get(self, db: AsyncSession, suite_id: UUID) -> Optional[Suite]:
         """
-        Get a suite by ID with collections eagerly loaded.
+        Get a suite by UUID with collections eagerly loaded.
         """
         stmt = (
             select(Suite)
@@ -34,11 +35,34 @@ class SuiteCRUD:
         result = await db.execute(stmt)
         return result.scalars().first()
 
+    async def get_by_name(self, db: AsyncSession, *, name: str) -> Optional[Suite]:
+        """
+        Get a suite by name with collections eagerly loaded.
+        """
+        stmt = (
+            select(Suite)
+            .options(selectinload(Suite.collections))
+            .filter(Suite.name == name)
+        )
+        result = await db.execute(stmt)
+        return result.scalars().first()
+
     async def get_all(
         self, db: AsyncSession, *, skip: int = 0, limit: int = 100
     ) -> List[Suite]:
         """
+        Get all suites (without collections for better performance).
+        """
+        stmt = select(Suite).offset(skip).limit(limit)
+        result = await db.execute(stmt)
+        return result.scalars().all()
+
+    async def get_all_with_collections(
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
+    ) -> List[Suite]:
+        """
         Get all suites with collections eagerly loaded.
+        Use this only when you need collections data.
         """
         stmt = (
             select(Suite)
@@ -63,9 +87,9 @@ class SuiteCRUD:
         await db.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db: AsyncSession, *, suite_id: int) -> Optional[Suite]:
+    async def delete(self, db: AsyncSession, *, suite_id: UUID) -> Optional[Suite]:
         """
-        Delete a suite.
+        Delete a suite by UUID.
         """
         stmt = select(Suite).filter(Suite.id == suite_id)
         result = await db.execute(stmt)
@@ -75,13 +99,48 @@ class SuiteCRUD:
             await db.commit()
         return db_suite
 
-    async def get_by_name(self, db: AsyncSession, *, name: str) -> Optional[Suite]:
+    async def delete_by_name(self, db: AsyncSession, *, name: str) -> Optional[Suite]:
         """
-        Get a suite by name.
+        Delete a suite by name.
         """
         stmt = select(Suite).filter(Suite.name == name)
         result = await db.execute(stmt)
-        return result.scalars().first()
+        db_suite = result.scalars().first()
+        if db_suite:
+            await db.delete(db_suite)
+            await db.commit()
+        return db_suite
+
+    async def exists(self, db: AsyncSession, *, suite_id: UUID) -> bool:
+        """
+        Check if a suite exists by UUID.
+        """
+        stmt = select(Suite.id).filter(Suite.id == suite_id)
+        result = await db.execute(stmt)
+        return result.scalar() is not None
+
+    async def exists_by_name(self, db: AsyncSession, *, name: str) -> bool:
+        """
+        Check if a suite exists by name.
+        """
+        stmt = select(Suite.id).filter(Suite.name == name)
+        result = await db.execute(stmt)
+        return result.scalar() is not None
+
+    async def search_by_name(
+        self, db: AsyncSession, *, name: str, skip: int = 0, limit: int = 100
+    ) -> List[Suite]:
+        """
+        Search suites by name (partial match).
+        """
+        stmt = (
+            select(Suite)
+            .filter(Suite.name.ilike(f"%{name}%"))
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        return result.scalars().all()
 
 
 # Create an instance of the SuiteCRUD class

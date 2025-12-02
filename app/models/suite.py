@@ -3,11 +3,14 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
+
 
 class Suite(Base):
     __tablename__ = "suite"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text)
 

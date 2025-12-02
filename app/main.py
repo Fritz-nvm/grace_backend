@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from app.api import collections, items, suite
+from app.api import collections, items, package, suite, package, testimonial
 from app.admin import admin, setup_admin_views
 
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -59,6 +59,16 @@ app.include_router(
 )
 
 app.include_router(items.router, prefix=f"{settings.API_V1_STR}/items", tags=["items"])
+
+app.include_router(
+    package.router, prefix=f"{settings.API_V1_STR}/packages", tags=["packages"]
+)
+
+app.include_router(
+    testimonial.router,
+    prefix=f"{settings.API_V1_STR}/testimonials",
+    tags=["testimonials"],
+)
 
 
 @app.get("/")

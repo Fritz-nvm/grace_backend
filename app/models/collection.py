@@ -4,11 +4,14 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
+
 
 class Collection(Base):
     __tablename__ = "collections"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text)
 
@@ -19,9 +22,13 @@ class Collection(Base):
 
     # Relationship
 
-    suite_id = Column(Integer, ForeignKey("suite.id"))  # Add suite foreign key
+    suite_id = Column(UUID(as_uuid=True), ForeignKey("suite.id", ondelete="CASCADE"))
 
-    suite = relationship("Suite", back_populates="collections")
+    suite = relationship("Suite", back_populates="collections", lazy="joined")
     items = relationship(
         "Item", back_populates="collection", cascade="all, delete-orphan"
     )
+
+    @property
+    def suite_name(self):
+        return self.suite.name if self.suite else None

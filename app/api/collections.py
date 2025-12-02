@@ -29,18 +29,18 @@ async def list_collections(
     return await crud_collection.get_all(db=db, skip=skip, limit=limit)
 
 
-@router.get("/suite/{suite_id}", response_model=List[CollectionResponse])
+@router.get("/suite/{suite_name}", response_model=List[CollectionResponse])
 async def list_collections_by_suite(
-    suite_id: int, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    suite_name: str, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     return await crud_collection.get_by_suite(
-        db=db, suite_id=suite_id, skip=skip, limit=limit
+        db=db, suite_name=suite_name, skip=skip, limit=limit
     )
 
 
-@router.get("/{collection_id}", response_model=CollectionResponse)
-async def get_collection(collection_id: int, db: AsyncSession = Depends(get_db)):
-    collection = await crud_collection.get(db=db, collection_id=collection_id)
+@router.get("/{collection_name}", response_model=CollectionResponse)
+async def get_collection(collection_name: str, db: AsyncSession = Depends(get_db)):
+    collection = await crud_collection.get(db=db, collection_name=collection_name)
     if not collection:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"

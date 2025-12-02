@@ -1,7 +1,10 @@
 from typing import List, Optional
 from datetime import datetime
+from click import UUID
 from pydantic import BaseModel, Field
 from app.schemas.item import Item
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CollectionBase(BaseModel):
@@ -9,7 +12,7 @@ class CollectionBase(BaseModel):
     description: Optional[str] = None
     is_active: Optional[bool] = True
     display_order: Optional[int] = 0
-    suite_id: int
+    suite_id: uuid.UUID
 
 
 class CollectionCreate(CollectionBase):
@@ -21,11 +24,11 @@ class CollectionUpdate(BaseModel):
     description: Optional[str] = None
     is_active: Optional[bool] = None
     display_order: Optional[int] = None
-    suite_id: Optional[int] = None
+    suite_id: Optional[str] = None
 
 
 class CollectionInDBBase(CollectionBase):
-    id: int
+    id: uuid.UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -35,10 +38,12 @@ class CollectionInDBBase(CollectionBase):
 
 class Collection(CollectionInDBBase):
     # Option 1: List of item IDs (simple, avoids circular imports)
-    item_ids: List[int] = []
+    # item_ids: List[int] = []
 
     # Option 2: Full item objects (if you want complete item data)
-    # items: List[Item] = []
+    suite_name: Optional[str] = None
+
+    items: List[Item] = []
 
     class Config:
         from_attributes = True

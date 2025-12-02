@@ -6,6 +6,9 @@ CRUD operations for the application.
 from app.crud.suite import suite
 from app.crud.collection import collection
 from app.crud.item import item
+from app.crud.package import package
+from app.crud.testimonial import testimonial
+
 
 # Export CRUD instances
-__all__ = ["suite", "collection", "item"]
+__all__ = ["suite", "collection", "item", "package", "testimonial"]

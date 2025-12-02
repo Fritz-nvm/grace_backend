@@ -3,6 +3,9 @@ from typing import List, Optional
 from datetime import datetime
 from app.schemas.collection import Collection
 
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
+
 
 class SuiteBase(BaseModel):
     name: str = Field(..., max_length=255)
@@ -21,7 +24,7 @@ class SuiteUpdate(BaseModel):
 
 
 class SuiteInDBBase(SuiteBase):
-    id: int
+    id: uuid.UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -30,7 +33,24 @@ class SuiteInDBBase(SuiteBase):
 
 
 class Suite(SuiteInDBBase):
-    pass
+    class Config:
+        from_attributes = True
+
+
+# Detailed response with collections
+class SuiteWithCollections(Suite):
+    collections: List["Collection"] = []
+
+    class Config:
+        from_attributes = True
+
+
+SuiteResponse = Suite
+
+
+class Suite(SuiteInDBBase):
+    class Config:
+        from_attributes = True
 
 
 SuiteResponse = Suite
