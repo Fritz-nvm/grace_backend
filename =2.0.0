@@ -1,0 +1,3 @@
+Requirement already satisfied: SQLAlchemy in ./env/lib/python3.11/site-packages (2.0.25)
+Requirement already satisfied: typing-extensions>=4.6.0 in ./env/lib/python3.11/site-packages (from SQLAlchemy) (4.15.0)
+Requirement already satisfied: greenlet!=0.4.17 in ./env/lib/python3.11/site-packages (from SQLAlchemy) (3.2.4)
