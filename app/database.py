@@ -2,6 +2,7 @@ import sys
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base
 from app.config import settings
+import os
 
 try:
     # SQLAlchemy >= 2.0
@@ -20,7 +21,7 @@ except ImportError:
 
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.async_database_url,
     echo=True if settings.ENVIRONMENT == "development" else False,
     future=True,
 )
