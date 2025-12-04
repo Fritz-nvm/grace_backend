@@ -9,11 +9,12 @@ from app.admin import admin, setup_admin_views
 
 from sqlalchemy.ext.asyncio import create_async_engine
 import os
+from config import settings
 
 load_dotenv()
 
 
-ASYNC_DATABASE_URL = os.getenv("DATABASE_URL")
+ASYNC_DATABASE_URL = settings.async_database_url
 async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
 
 app = FastAPI(
