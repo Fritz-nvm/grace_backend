@@ -1,14 +1,12 @@
 from logging.config import fileConfig
 import sys
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 from sqlalchemy import pool
 from app.models import collection, item, package, suite, testimonial
 from sqlalchemy.ext.asyncio import create_async_engine
+from app.config import get_settings
+
 
 from alembic import context
 
@@ -32,8 +30,14 @@ target_metadata = Base.metadata
 # alembic/env.py (Add this line after target_metadata = Base.metadata)
 print("Registered table names:", target_metadata.tables.keys())
 
-# Load the DATABASE_URL from application settings
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Get async URL from your config
+settings = get_settings()
+database_url = settings.async_database_url
+
+print(f"Using async database URL: {database_url[:50]}...")
+
+# Set the URL in alembic config
+config.set_main_option("sqlalchemy.url", database_url)
 
 
 def run_migrations_offline() -> None:
@@ -44,7 +48,7 @@ def run_migrations_offline() -> None:
 
     """
     # Use the loaded URL for offline mode
-    url = DATABASE_URL
+    url = database_url
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,7 +68,7 @@ def run_migrations_online() -> None:
 
     """
     connectable = create_async_engine(
-        DATABASE_URL,
+        database_url,
         poolclass=pool.NullPool,
     )
 
