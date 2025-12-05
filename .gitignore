@@ -228,5 +228,4 @@ venv/
 .idea/
 *.db
 *.sqlite3
-alembic/versions/*_*.py
 !alembic/versions/.gitkeep
