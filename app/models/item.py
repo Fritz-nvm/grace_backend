@@ -24,6 +24,7 @@ from app.db_types import ListStringType
 class CategoryEnum(enum.Enum):
     bridal = "bridal"
     boutique = "boutique"
+    after_event = "after event"
 
 
 class Item(Base):
