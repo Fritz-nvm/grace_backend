@@ -40,8 +40,8 @@ class PackageOut(PackageBase):
     created_at: datetime
     updated_at: datetime
 
-    package_name: Optional[str]
-    download_link: Optional[str]
+    package_name: Optional[str] = None
+    download_link: Optional[str] = None
 
     class Config:
         from_attributes = True

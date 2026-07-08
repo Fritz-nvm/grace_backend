@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Numeric
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Boolean,
+    DateTime,
+    Numeric,
+    CheckConstraint,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base  # Assuming this import is correct
@@ -12,6 +21,11 @@ from typing import List
 
 class Package(Base):
     __tablename__ = "packages"
+    __table_args__ = (
+        CheckConstraint(
+            "display_order >= 0", name="ck_packages_display_order_nonnegative"
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True)
@@ -28,3 +42,7 @@ class Package(Base):
     @property
     def package_name(self):
         return self.name if self.name else None
+
+    @property
+    def download_link(self):
+        return self.pdf_url if self.pdf_url else None
