@@ -1,4 +1,3 @@
-# app/models/collection.py
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -32,3 +31,9 @@ class Collection(Base):
     @property
     def suite_name(self):
         return self.suite.name if self.suite else None
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f"Collection(name={self.name!r})"
