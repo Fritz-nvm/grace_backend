@@ -37,3 +37,9 @@ class Collection(Base):
 
     def __repr__(self):
         return f"Collection(name={self.name!r})"
+
+    def __admin_repr__(self, request):
+        return self.name
+
+    def __admin_select2_repr__(self, request):
+        return self.name
