@@ -31,7 +31,7 @@ class SimpleAuthProvider(AuthProvider):
         if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
             request.session.update({"username": username, "is_admin": True})
             return response
-        return None
+        raise LoginFailed("Invalid username or password")
 
     async def is_authenticated(self, request) -> bool:
         """
