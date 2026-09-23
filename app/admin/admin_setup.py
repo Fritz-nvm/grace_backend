@@ -7,6 +7,8 @@ from starlette_admin import I18nConfig
 from starlette_admin.contrib.sqla import Admin
 from starlette_admin.auth import AuthProvider, login_not_required
 from sqlalchemy.ext.asyncio import create_async_engine
+from starlette_admin.exceptions import LoginFailed
+
 
 from app.config import settings
 
